@@ -1,5 +1,5 @@
 venv/
 output/
 __pycache__/
-output.glb
-output.binm
+baked.binm
+baked.glb
