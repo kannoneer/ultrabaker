@@ -12,6 +12,8 @@ import model_loader
 parser = ArgumentParser(description="Bakes GLTF models with lightmaps to vertex colors")
 parser.add_argument("input", help="Path to input .GLTF model")
 parser.add_argument("output", default="baked.glb", nargs='?', help="Name of output model.")
+parser.add_argument("--smoothing", type=float, default=20, help="Color smoothing value in range [0,100]")
+parser.add_argument("--show", action='store_true', help="Show the baking result visualization at the end.")
 args = parser.parse_args()
 print(args)
 
@@ -331,7 +333,7 @@ print("Solving")
 
 import scipy.sparse
 
-alpha = 0.8
+alpha = args.smoothing/100.0
 R_scale = np.percentile(tri_areas, 50) # HACK: scale R matrix by triangle area since it's unitless (?)
 A_reg = A + alpha * R_scale * R
 
@@ -355,21 +357,22 @@ gltf.save_binary(args.output)
 model_loader.save_big_endian_dump(str(Path(args.output).with_suffix('.binm')), positions, tris, color_rgb)
 print("Saving done")
 
-print("Rasterizing the result for preview")
+if args.show:
+    print("Rasterizing the result for preview")
 
-img_result = np.zeros_like(img)
-draw_triangles(uvs, x, tris, img_result)
+    img_result = np.zeros_like(img)
+    draw_triangles(uvs, x, tris, img_result)
 
-plot_shape = (2,1)
-figsize=(12,6)
-if img.shape[0] > img.shape[1]:
     plot_shape = (1,2)
-    figsize=(figsize[1], figsize[0])
-fig,ax=plt.subplots(*plot_shape, figsize=figsize)
-ax.flatten()[0].imshow(img, vmin=0, vmax=1)
-ax.flatten()[0].set_title("Input image lightmap")
-ax.flatten()[1].imshow(img_result, vmin=0, vmax=1)
-ax.flatten()[1].set_title("Vertex color lightmap")
-plt.suptitle("Result")
-plt.tight_layout()
-plt.show()
+    figsize=(12,6)
+    if img.shape[0] > img.shape[1]:
+        plot_shape = (2,1)
+        figsize=(figsize[1], figsize[0])
+    fig,ax=plt.subplots(*plot_shape, figsize=figsize)
+    ax.flatten()[0].imshow(img, vmin=0, vmax=1)
+    ax.flatten()[0].set_title("Input image lightmap")
+    ax.flatten()[1].imshow(img_result, vmin=0, vmax=1)
+    ax.flatten()[1].set_title("Vertex color lightmap")
+    plt.suptitle("Result")
+    plt.tight_layout()
+    plt.show()
