@@ -317,7 +317,10 @@ for i in tqdm(range(N)):
     # Neighbor triangle area in pixels and the number of per-pixel samples considered in the weighted
     # average are very close but not exactly the same due to difference between analytical and rasterized areas.
     # I'm still computing the ratio here but you could possibly assume it to be unity and simplify this code.
-    b[i] = (total_neighbor_area / num_samples) * np.sum(hat_i[...,None] * img, axis=(0,1))
+
+    # Very small triangles may not rasterize even a single pixel.
+    if num_samples > 0:
+        b[i] = (total_neighbor_area / num_samples) * np.sum(hat_i[...,None] * img, axis=(0,1))
 
     if False:
         fig,ax=plt.subplots(3, figsize=(6,12))
